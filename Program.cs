@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text.RegularExpressions;
 
 namespace Cybersecurity_Awareness_ChatBot
 {
@@ -6,7 +7,7 @@ namespace Cybersecurity_Awareness_ChatBot
     {
         static void Main(string[] args)
         {
-
+            Response_System_and_Validation Response_System_and_Validation_Obj = new Response_System_and_Validation();// Create an instance of the Response_System_and_Validation class to access its methods and functionality, allowing the chatbot to process user input and generate appropriate responses based on the defined logic within the class.
             //Create sound greeting message to welcome users to the chatbot
             PlaySound();
 
@@ -15,6 +16,12 @@ namespace Cybersecurity_Awareness_ChatBot
 
             //Greet user and display welcome message
             GreetUser();
+
+           
+            Response_System_and_Validation_Obj.Responses();//Call the Responses method to process the user's input and generate an appropriate response
+            Console.WriteLine();
+
+            
         }
 
         public static void PlaySound()
@@ -45,6 +52,7 @@ namespace Cybersecurity_Awareness_ChatBot
 
         public static void GreetUser()
         {
+            Response_System_and_Validation Response_System_and_Validation_Obj = new Response_System_and_Validation();
             //Display a welcome banner to the user
             Console.WriteLine(
                 @"╔~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^-╗
@@ -63,8 +71,33 @@ namespace Cybersecurity_Awareness_ChatBot
             string name = Console.ReadLine();//Read the user's input and store it in a variable
             Console.WriteLine();
 
-            Console.WriteLine($"Hello {name}!");//Greet the user by name
+            while (true)
+            {
 
+                if (String.IsNullOrWhiteSpace(name))
+                {
+                    Console.WriteLine("The field for name can not be empty or ");
+                    name = Console.ReadLine();
+                    continue;
+                }
+                if (name.Length < 2)
+                {
+                    Console.WriteLine("The name should be at least 2 characters long");
+                    name = Console.ReadLine();
+                    continue;
+                }
+                if (!Regex.IsMatch(name, @"[a-zA-z]+$"))
+                {
+                    Console.WriteLine("The name should only contain letters");
+                    name = Console.ReadLine();
+                    continue;
+                }
+                break;
+            }
+
+            Console.WriteLine($"Hello {name}! , I hope you are well. \nMy purpose is to educate you with cybersecurity concepts such as: \n*Password Safety \n*Phishing \n*Safe browsing");//Greet the user by name and let users know what the chatbot is designed to do. 
+            Console.WriteLine();
+                       
 
         }
 
@@ -73,7 +106,8 @@ namespace Cybersecurity_Awareness_ChatBot
 
     }
 
-   
+    
 
 
 }
+
