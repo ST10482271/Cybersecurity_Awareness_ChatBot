@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Text.RegularExpressions;
+using System.Xml.Linq;
 
 namespace Cybersecurity_Awareness_ChatBot
 {
@@ -34,6 +35,7 @@ namespace Cybersecurity_Awareness_ChatBot
 
         public static void DisplayLogo()
         {
+            Console.ForegroundColor = ConsoleColor.Red;//Set the console text color to red for the logo
             //Create a simple ASCII art logo for the chatbot
             Console.WriteLine(@"
               |`-._/\_.-`|
@@ -48,12 +50,14 @@ namespace Cybersecurity_Awareness_ChatBot
 
 
 ");
+                Console.ResetColor();
         }
 
         public static void GreetUser()
         {
             Response_System_and_Validation Response_System_and_Validation_Obj = new Response_System_and_Validation();
-            //Display a welcome banner to the user
+            Console.ForegroundColor = ConsoleColor.Green;//Set the console text color to yellow for the welcome banner
+                                                         //Display a welcome banner to the user
             Console.WriteLine(
                 @"╔~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^-╗
 │                                                                     │
@@ -61,43 +65,85 @@ namespace Cybersecurity_Awareness_ChatBot
 │                                  *                                  │
 │                                 CSAB                                │                    
 ╚~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~╝");
+            Console.ResetColor();
 
             Console.WriteLine();
 
-            Console.WriteLine("Please enter your name: ");//Prompt the user to enter their name
+            string name = GetUserName();//Call the GetUserName method to prompt the user for their name and store it in a variable
 
             Console.WriteLine();
+            Response_System_and_Validation_Obj.Print($"CSA Bot: Hello {name}! , I hope you are well. \nMy purpose is to educate you with cybersecurity concepts such as: \n*Password Safety \n*Phishing \n*Safe browsing");//Greet the user by name and let users know what the chatbot is designed to do. 
+            Console.WriteLine();
+        }
 
+        public static string SavedName { get; private set; }//Define a property to store the user's name for later use in the chatbot's responses and interactions.
+        //preventes repeating the method or validation for getting the user's name multiple times throughout the chatbot's interactions.
+
+        public static string GetUserName() //Define a method to get the user's name with input validation
+        {
+            Response_System_and_Validation Response_System_and_Validation_Obj = new Response_System_and_Validation();
+
+            Response_System_and_Validation_Obj.Print("Please enter your name: ");
+          
+            Console.WriteLine();
+
+            Console.ForegroundColor = ConsoleColor.Cyan;//Set the console text color to cyan for the user's input
+            Console.Write("You: ");
             string name = Console.ReadLine();//Read the user's input and store it in a variable
             Console.WriteLine();
+            Console.ResetColor();//Reset the console text color to the default color after reading the user's input
 
             while (true)
             {
 
-                if (String.IsNullOrWhiteSpace(name))
+                if (String.IsNullOrWhiteSpace(name))//Check if the user's input is null, empty, or consists only of whitespace characters(input validation)
                 {
-                    Console.WriteLine("The field for name can not be empty or ");
-                    name = Console.ReadLine();
-                    continue;
-                }
-                if (name.Length < 2)
-                {
-                    Console.WriteLine("The name should be at least 2 characters long");
-                    name = Console.ReadLine();
-                    continue;
-                }
-                if (!Regex.IsMatch(name, @"[a-zA-z]+$"))
-                {
-                    Console.WriteLine("The name should only contain letters");
-                    name = Console.ReadLine();
-                    continue;
-                }
-                break;
-            }
+                    Console.ForegroundColor = ConsoleColor.Red;//Set the console text color to red for the error message
+                    Console.WriteLine();
+                    Response_System_and_Validation_Obj.Print($"CSA Bot:The field for name can not be empty!");
+                    Console.WriteLine();
 
-            Console.WriteLine($"Hello {name}! , I hope you are well. \nMy purpose is to educate you with cybersecurity concepts such as: \n*Password Safety \n*Phishing \n*Safe browsing");//Greet the user by name and let users know what the chatbot is designed to do. 
-            Console.WriteLine();
-                       
+                    Console.ResetColor();
+                    Console.ForegroundColor = ConsoleColor.Cyan;
+                    Console.Write("You: ");
+                    name = Console.ReadLine();
+                    Console.ResetColor();
+                    continue;
+                }
+                if (name.Length < 2)//Check if the user's input is less than 2 characters long (input validation)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine();
+                    Response_System_and_Validation_Obj.Print($"CSA Bot:The name should be at least 2 characters long!");
+                    Console.WriteLine();
+
+                    Console.ResetColor();
+                    Console.ForegroundColor = ConsoleColor.Cyan;
+                    Console.Write("You: ");
+                    name = Console.ReadLine();
+                    Console.ResetColor();
+                    continue;
+                }
+                if (!Regex.IsMatch(name, @"[a-zA-z]+$"))//Check if the user's input contains only letters (input validation)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine();
+                    Response_System_and_Validation_Obj.Print($"CSA Bot:The name should only contain letters!");
+                    Console.WriteLine();
+
+                    Console.ResetColor();
+                    Console.ForegroundColor = ConsoleColor.Cyan;
+                    Console.Write("You: ");
+                    name = Console.ReadLine();
+                    Console.ResetColor();
+                    continue;//If the user's input fails any of the validation checks, display an appropriate error message and prompt the user to enter their name again until a valid name is provided.
+                }
+                break;//If the user's input passes all validation checks, exit the loop and proceed with the valid name.
+
+
+            }
+            SavedName = name;//Store the valid name in the SavedName property for later use in the chatbot's responses and interactions
+            return name;//Return the valid name to be used in the GreetUser method for greeting the user by name and providing a personalized experience in the chatbot.
 
         }
 
