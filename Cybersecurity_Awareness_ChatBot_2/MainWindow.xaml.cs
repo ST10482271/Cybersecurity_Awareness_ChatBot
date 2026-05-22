@@ -1,5 +1,8 @@
-﻿using System.Diagnostics.Eventing.Reader;
+﻿using Microsoft.VisualBasic;
+using System.Diagnostics.Eventing.Reader;
 using System.IO.Packaging;
+using System.Net.NetworkInformation;
+using System.Security.Policy;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows;
@@ -29,7 +32,32 @@ namespace Cybersecurity_Awareness_ChatBot_2
             " A modern watchword or code, often used with a username, to verify that a person is allowed to enter a digital space, similar to a physical key or a password given to a guard",
             "A line of defense designed to protect personal, financial, or confidential information from being stolen by malicious actors (hackers)." };
 
+        string[] scams =
+        {
+            "A fraudulent scheme or deceptive practice designed to trick individuals into giving away money, personal information, or other valuable assets.",
+            "A type of cyber attack where attackers impersonate legitimate entities (like banks, government agencies, or well-known companies) to deceive victims into providing sensitive information or making financial transactions.",
+            "A form of online fraud that often involves fake websites, emails, or messages that appear to be from trustworthy sources, aiming to steal personal data or money from unsuspecting victims.",
+            "Never send money or provide personal information to unexpected requests. Independently verify the claim by contacting the company directly using a trusted, official phone number or website rather than the contact info provided in the message.",
+            "Treat your sensitive information like cash. Never share your passwords, PINs, or One-Time Passwords (OTPs) with anyone, and be cautious about how much personal detail you share on social media."
+        };
 
+        string[] privacy =
+        {
+            "The state or condition of being free from public attention or unsanctioned intrusion, especially in the context of personal information and online activities.",
+            "The right of individuals to control access to their personal information and to be free from unauthorized surveillance or data collection.",
+            "A fundamental aspect of cybersecurity that involves protecting sensitive data from unauthorized access, ensuring that individuals have control over their own information, and maintaining confidentiality in digital interactions.",
+            "A modern watchword or code, often used with a username, to verify that a person is allowed to enter a digital space, similar to a physical key or a password given to a guard",
+            "A line of defense designed to protect personal, financial, or confidential information from being stolen by malicious actors (hackers)."
+        };
+
+        string[] phishing =
+        {
+            "A type of cyber attack where attackers attempt to trick individuals into providing sensitive information, such as usernames, passwords, or financial details, by pretending to be a trustworthy entity.",
+            "Phishing attacks often come in the form of emails, messages, or websites that appear legitimate but are designed to steal personal information.",
+            "Phishing is a common method used by cybercriminals to gain unauthorized access to accounts, commit identity theft, or carry out financial fraud by exploiting human psychology and trust.",
+            "To protect yourself from phishing, be cautious of unsolicited messages, verify the sender's identity, and avoid clicking on suspicious links or downloading attachments from unknown sources.",
+            " To protect yourself from phishing look up the company’s official phone number or website on a previous statement or official directory, and contact them yourself."
+        };
 
         string userName = " ";
         string input = " ";
@@ -48,7 +76,7 @@ namespace Cybersecurity_Awareness_ChatBot_2
 
 
             ChatArea.AppendText($"Welcome to the CSABot{currentUsername}, please enter '@' to end our conversation {Environment.NewLine} ");
-            ChatArea.AppendText($"I am here to assit you with passwords, scams, and privacy{Environment.NewLine}");
+            ChatArea.AppendText($"I am here to assit you with passwords, scams, privacy, phishing, {Environment.NewLine}");
             ChatArea.AppendText($"If you are a returing friend, please greet me with a 'hello' or 'hi' or press send to receive a surprise!!{Environment.NewLine}");//tooo make the chatbot more fun and engaing 
             ChatArea.AppendText($"{Environment.NewLine}");
 
@@ -126,7 +154,10 @@ namespace Cybersecurity_Awareness_ChatBot_2
 
                 // Detect topic based on keywords in the input
                 string detectedTopic = "";
-                if (input.Contains("password")) detectedTopic = "password";
+                if (input.Contains("passwords")) detectedTopic = "passwords";
+                if (input.Contains("scams")) detectedTopic = "scams";
+                if (input.Contains("privacy")) detectedTopic = "privacy";
+                if (input.Contains("phishing")) detectedTopic = "phishing";
 
                 if (!string.IsNullOrWhiteSpace(detectedTopic)) { 
                 
@@ -142,9 +173,9 @@ namespace Cybersecurity_Awareness_ChatBot_2
 
                     }
 
-                    //check if they said interested in learning about the topic or asked over 3 times
+                    //check if they said interested in learning about the topic or asked over 2 times
                     bool isInterested = input.Contains("interested");
-                    if (isInterested || topicCount > 3) { 
+                    if (isInterested || topicCount > 2 ) { 
                     
                         ChatbotMemory.SaveUserInterest(currentUsername, detectedTopic);// Save the user's interest in the detected topic for future reference or personalized interactions
                     }
@@ -153,30 +184,50 @@ namespace Cybersecurity_Awareness_ChatBot_2
                 // Check for empty input
                 if (string.IsNullOrWhiteSpace(input))
                 {
-                    return "I'm here to assist! Please type a message or ask a question about the topics provided above.";
+                    return $"I'm here to assist {currentUsername} Please type a message or ask a question about the topics provided above.";
                 }
 
                 //Set current topic 
                 if (input.Contains("passwords")) currentTopic = "passwords";
+                if (input.Contains("scams")) currentTopic = "scams";
+                if (input.Contains("privacy")) currentTopic = "privacy";
+                if (input.Contains("phishing")) currentTopic = "phishing";
 
                 //Handle sentiemtnal responses
-                if (input.Contains("passwords") && input.Contains("frustrated"))
-                    return $"I understand that managing passwords can be frustrating, {currentUsername}. Consider using a password manager to securely store and generate strong passwords, which can make it easier to manage multiple accounts without the stress of remembering them all.";
+               Sentiemantal_Responses sentimentalResponse = new Sentiemantal_Responses();
+               string response = sentimentalResponse.GetSentimentalResponse(input, currentUsername);
 
-                if (input.Contains("passwords") && input.Contains("worried"))
-                    return $"It's normal to feel worried about password security, {currentUsername}. To enhance your security, make sure to use unique passwords for each account, enable two-factor authentication where possible, and regularly update your passwords to reduce the risk of unauthorized access.";
+                if (!string.IsNullOrWhiteSpace(response))
+                {
 
+                    return response;
+                }
+
+                //if no sentiement normal responses
                 if (input.Contains("passwords"))
                     return GetRandomTips(password);
+
+                if (input.Contains("scams"))
+                    return GetRandomTips(scams);
+
+                if (input.Contains("privacy"))
+                    return GetRandomTips(privacy);
+
+                if (input.Contains("phishing")) 
+                    return GetRandomTips(phishing);
+
 
                 // Handle requests for more information
                 if (HasAnyKeyword(input, "explain", "another", "more")) { 
                     
-                    if (currentTopic == "passwords") return GetRandomTips(password);
+                  if (currentTopic == "passwords") return GetRandomTips(password);//return more info on the current topic
+                  if (currentTopic == "scams") return GetRandomTips(scams);
+                  if (currentTopic == "privacy") return GetRandomTips(privacy);
+                  if (currentTopic == "phishing") return GetRandomTips(phishing);
 
                 }
 
-                // Handle greetings for non-returning users
+                // Han dle greetings for non-returning users
                 if (HasAnyKeyword(input, "hello", "hi")) 
                     return "I told you it is only for returning users, but since you said hi, welcome the topics that I can assist with is above";
                 
@@ -187,8 +238,6 @@ namespace Cybersecurity_Awareness_ChatBot_2
 
                 //Catch-all response for unrecognized input error Handling
                  return "I'm sorry, I don't understand. Please rephrase your question or specify a topic you'd like to learn about, such as 'passwords', 'scams', and 'privacy'.";
-
-                
 
             }
 
