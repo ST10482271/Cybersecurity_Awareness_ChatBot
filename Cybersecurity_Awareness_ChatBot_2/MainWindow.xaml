@@ -48,7 +48,7 @@
             Background="White"
             Content= "Start CSABot"
             Click="start_bot"
-          />
+            />
 
         </Grid> <!--End of logo grid-->
 
@@ -125,14 +125,18 @@
 
                 <StackPanel x:Name="ChatStackPanel"  Width="800" Height="250"  Margin="0,0,0,150" RenderTransformOrigin="0.499,1.355">
 
-                 <ListView x:Name="ChatArea"
-                 Background="Transparent" 
-                 Foreground="Black"
-                 FontSize = "15"
-                 Width="800" 
-                 Height="250"
-                 
-                 Margin="0,0,0,150" RenderTransformOrigin="0.499,1.355"/>
+                    <ListView x:Name="ChatArea"
+                     Background="Transparent" 
+                     Foreground="Black"
+                     FontSize = "15"
+                     Width="800" 
+                     Height="245"
+                     Margin="0,0,0,150" 
+                     RenderTransformOrigin="0.499,1.355"
+                     ScrollViewer.HorizontalScrollBarVisibility="Visible">
+                        
+                    </ListView>
+
                 </StackPanel>
 
             </ScrollViewer>

@@ -94,10 +94,24 @@ namespace Cybersecurity_Awareness_ChatBot_2
 
         public static void PlaySound()
         {
-            //Create a SoundPlayer instance and set the sound location to the desired audio file
-            var soundPlayer = new System.Media.SoundPlayer();
-            soundPlayer.SoundLocation = @"C:\Users\Student\Desktop\Recording.wav";
-            soundPlayer.PlaySync();
+            //try catch block to handle potential exceptions that may occur when trying to play the sound file, such as file not found or unsupported format
+            try
+            {
+                System.Media.SoundPlayer soundPlayer = new System.Media.SoundPlayer();
+                string runningFolder = AppDomain.CurrentDomain.BaseDirectory;
+                soundPlayer.SoundLocation = System.IO.Path.Combine(runningFolder, "Recording.wav");
+                soundPlayer.Play();
+
+
+            }
+            catch(Exception ex) { 
+                // Handle the exception (e.g., log it, show a message to the user, etc.)
+               MessageBox.Show($"Error playing sound: {ex.Message}");
+            }
+            
+            
+
+
         }
 
 
