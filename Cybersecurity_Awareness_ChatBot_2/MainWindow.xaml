@@ -33,13 +33,13 @@
             </Border>
 
 
-
+            
             <Image  
             Source="\logo1.png"
             Height="250"
             Width="300"
             Margin="0,0,0,150"
-          />
+           />
 
             <Button 
             Height="50"
@@ -125,14 +125,13 @@
 
                 <StackPanel x:Name="ChatStackPanel"  Width="800" Height="250"  Margin="0,0,0,150" RenderTransformOrigin="0.499,1.355">
 
-                 <TextBox x:Name="ChatArea"
+                 <ListView x:Name="ChatArea"
                  Background="Transparent" 
                  Foreground="Black"
                  FontSize = "15"
                  Width="800" 
                  Height="250"
-                 IsReadOnly="True"
-                 TextWrapping="Wrap" 
+                 
                  Margin="0,0,0,150" RenderTransformOrigin="0.499,1.355"/>
                 </StackPanel>
 

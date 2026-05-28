@@ -81,10 +81,10 @@ namespace Cybersecurity_Awareness_ChatBot_2
             string lowerInput = input.ToLower(); // Convert input to lowercase for case-insensitive comparison
             if (lowerInput.Contains("passwords")){ 
               
-                if (lowerInput.Contains("worried"))
+                if (lowerInput.Contains("worried"))// Check if the input contains the word "worried"
                     return GetRandomTips(passwordsWorried).Replace("{currentUsername}", currentUsername);
 
-                if (lowerInput.Contains("frustrated"))
+                if (lowerInput.Contains("frustrated"))// Check if the input contains the word "frustrated"
                     return GetRandomTips(passwordFrustrated).Replace("{currentUsername}", currentUsername);
 
             }

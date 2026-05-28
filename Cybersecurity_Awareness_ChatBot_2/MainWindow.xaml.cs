@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualBasic;
+using System;
 using System.Diagnostics.Eventing.Reader;
 using System.IO.Packaging;
 using System.Net.NetworkInformation;
@@ -72,13 +73,13 @@ namespace Cybersecurity_Awareness_ChatBot_2
         {
             InitializeComponent();
             PlaySound();
+
+
+
+            Chatbot_Color("CSABot: ", $"Welcome to the CSABot{currentUsername}, please enter '@' to end our conversation {Environment.NewLine} ");
+            Chatbot_Color("CSABot: ", $"I am here to assit you with passwords, scams, privacy, phishing, {Environment.NewLine}");
+            Chatbot_Color("CSABot: ", $"If you are a returing friend, please greet me with a 'hello' or 'hi' or press send to receive a surprise!!{Environment.NewLine}");//tooo make the chatbot more fun and engaing 
             
-
-
-            ChatArea.AppendText($"Welcome to the CSABot{currentUsername}, please enter '@' to end our conversation {Environment.NewLine} ");
-            ChatArea.AppendText($"I am here to assit you with passwords, scams, privacy, phishing, {Environment.NewLine}");
-            ChatArea.AppendText($"If you are a returing friend, please greet me with a 'hello' or 'hi' or press send to receive a surprise!!{Environment.NewLine}");//tooo make the chatbot more fun and engaing 
-            ChatArea.AppendText($"{Environment.NewLine}");
 
             
 
@@ -117,11 +118,11 @@ namespace Cybersecurity_Awareness_ChatBot_2
 
 
             // Append the user's input to the ChatArea TextBox, prefixed with the user's name and followed by a new line for formatting
-            ChatArea.AppendText($"{userName}: {input} {Environment.NewLine}");
+            User_Color($"{userName}: ", $"{input} {Environment.NewLine}");
 
             reply = ChatAiResponse(input);// Get the chatbot's response by calling the ChatAiResponse method with the user's input
 
-            ChatArea.AppendText($"Chatbot: {reply}{Environment.NewLine}{Environment.NewLine}");
+            Chatbot_Color($"CSABot: ", $"{reply}{Environment.NewLine}");
 
 
             // Clear the InputArea TextBox, scroll the ChatScrollViewer to the end to show the latest messages, and set focus back to the InputArea for user convenience
@@ -227,6 +228,12 @@ namespace Cybersecurity_Awareness_ChatBot_2
 
                 }
 
+                // Handle expressions of worry or concern
+                if (HasAnyKeyword(input, "worried","concerned", "fearful,", "frustrated")) { 
+                
+                    return $"I know cybersecurity can be overwhelming, but being informed and cautious is the best way to protect yourself. Please specifiy which topic you are concerned about. e.g i am worried about passwords.";
+                }
+
                 // Han dle greetings for non-returning users
                 if (HasAnyKeyword(input, "hello", "hi")) 
                     return "I told you it is only for returning users, but since you said hi, welcome the topics that I can assist with is above";
@@ -322,8 +329,62 @@ namespace Cybersecurity_Awareness_ChatBot_2
             return false;
         }
 
-      
+        private void Chatbot_Color(string name, string message)
+        {//start of error mehtod
 
-       
+            //call the chats which is a listview
+            ChatArea.Items.Add(
+                new TextBlock
+                {
+                    Inlines = {
+                     new Run{
+                     Text= name + " : ",
+                     Foreground =Brushes.DarkBlue,
+                     FontWeight = FontWeights.Bold
+
+
+                     }   ,
+                     new Run {
+                     Text= " " + message,
+                     Foreground =Brushes.Black
+
+                     }
+
+                    }
+
+                }
+
+                );
+
+        }//end of error method
+
+        private void User_Color(string name, string message)
+        {
+
+            ChatArea.Items.Add(
+                new TextBlock
+                {
+                    Inlines = {
+                     new Run{
+                     Text= name + " : ",
+                     Foreground =Brushes.Purple,
+                     FontWeight = FontWeights.Bold
+
+
+                     }   ,
+                     new Run {
+                     Text= " " + message,
+                     Foreground =Brushes.Black
+
+                     }
+
+                    }
+
+                }
+
+                );
+
+
+        }
     }
 }
