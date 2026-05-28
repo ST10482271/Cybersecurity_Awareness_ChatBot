@@ -27,37 +27,36 @@ namespace Cybersecurity_Awareness_ChatBot_2
 
         string[] password =
          {
-            "A confidential sequence of characters (letters, numbers, and symbols) used by a user to prove their identity to a system.",
-            "A security measure designed to grant authorized users access to a device, application, or network while restricting unauthorized users.",
-            "A specific type of shared secret (similar to a passphrase) meant to be known only to the user and the system, often considered something you know in authentication protocols.",
-            " A modern watchword or code, often used with a username, to verify that a person is allowed to enter a digital space, similar to a physical key or a password given to a guard",
-            "A line of defense designed to protect personal, financial, or confidential information from being stolen by malicious actors (hackers)." };
-
+            "A password is a confidential sequence of characters (letters, numbers, and symbols) used by a user to prove their identity to a system.",
+            "A password is a security measure designed to grant authorized users access to a device, application, or network while restricting unauthorized users.",
+            "A password is a specific type of shared secret (similar to a passphrase) meant to be known only to the user and the system, often considered something you know in authentication protocols.",
+            "A password is a modern watchword or code, often used with a username, to verify that a person is allowed to enter a digital space, similar to a physical key or a password given to a guard",
+            "A password is a line of defense designed to protect personal, financial, or confidential information from being stolen by malicious actors (hackers)." };
         string[] scams =
         {
-            "A fraudulent scheme or deceptive practice designed to trick individuals into giving away money, personal information, or other valuable assets.",
-            "A type of cyber attack where attackers impersonate legitimate entities (like banks, government agencies, or well-known companies) to deceive victims into providing sensitive information or making financial transactions.",
-            "A form of online fraud that often involves fake websites, emails, or messages that appear to be from trustworthy sources, aiming to steal personal data or money from unsuspecting victims.",
-            "Never send money or provide personal information to unexpected requests. Independently verify the claim by contacting the company directly using a trusted, official phone number or website rather than the contact info provided in the message.",
-            "Treat your sensitive information like cash. Never share your passwords, PINs, or One-Time Passwords (OTPs) with anyone, and be cautious about how much personal detail you share on social media."
+            "A scam is a fraudulent scheme or deceptive practice designed to trick individuals into giving away money, personal information, or other valuable assets.",
+            "A scam is a  type of cyber attack where attackers impersonate legitimate entities (like banks, government agencies, or well-known companies) to deceive victims into providing sensitive information or making financial transactions.",
+            "A scam is a form of online fraud that often involves fake websites, emails, or messages that appear to be from trustworthy sources, aiming to steal personal data or money from unsuspecting victims.",
+            "A scam is a situation where you should never send money or provide personal information to unexpected requests. Independently verify the claim by contacting the company directly using a trusted, official phone number or website rather than the contact info provided in the message.",
+            "A scam is a scenario where you should treat your sensitive information like cash. Never share your passwords, PINs, or One-Time Passwords (OTPs) with anyone, and be cautious about how much personal detail you share on social media."
         };
 
         string[] privacy =
         {
-            "The state or condition of being free from public attention or unsanctioned intrusion, especially in the context of personal information and online activities.",
-            "The right of individuals to control access to their personal information and to be free from unauthorized surveillance or data collection.",
-            "A fundamental aspect of cybersecurity that involves protecting sensitive data from unauthorized access, ensuring that individuals have control over their own information, and maintaining confidentiality in digital interactions.",
-            "A modern watchword or code, often used with a username, to verify that a person is allowed to enter a digital space, similar to a physical key or a password given to a guard",
-            "A line of defense designed to protect personal, financial, or confidential information from being stolen by malicious actors (hackers)."
+            "Privacy is the state or condition of being free from public attention or unsanctioned intrusion, especially in the context of personal information and online activities.",
+            "Privacy is the right of individuals to control access to their personal information and to be free from unauthorized surveillance or data collection.",
+            "Privacy is a fundamental aspect of cybersecurity that involves protecting sensitive data from unauthorized access, ensuring that individuals have control over their own information, and maintaining confidentiality in digital interactions.",
+            "Privacy is a modern watchword or code, often used with a username, to verify that a person is allowed to enter a digital space, similar to a physical key or a password given to a guard",
+            "Privacy is a line of defense designed to protect personal, financial, or confidential information from being stolen by malicious actors (hackers)."
         };
 
         string[] phishing =
         {
-            "A type of cyber attack where attackers attempt to trick individuals into providing sensitive information, such as usernames, passwords, or financial details, by pretending to be a trustworthy entity.",
+            "Phishing is a type of cyber attack where attackers attempt to trick individuals into providing sensitive information, such as usernames, passwords, or financial details, by pretending to be a trustworthy entity.",
             "Phishing attacks often come in the form of emails, messages, or websites that appear legitimate but are designed to steal personal information.",
             "Phishing is a common method used by cybercriminals to gain unauthorized access to accounts, commit identity theft, or carry out financial fraud by exploiting human psychology and trust.",
             "To protect yourself from phishing, be cautious of unsolicited messages, verify the sender's identity, and avoid clicking on suspicious links or downloading attachments from unknown sources.",
-            " To protect yourself from phishing look up the company’s official phone number or website on a previous statement or official directory, and contact them yourself."
+            "To protect yourself from phishing look up the company’s official phone number or website on a previous statement or official directory, and contact them yourself."
         };
 
         string userName = " ";
@@ -74,15 +73,10 @@ namespace Cybersecurity_Awareness_ChatBot_2
             InitializeComponent();
             PlaySound();
 
-
-
             Chatbot_Color("CSABot: ", $"Welcome to the CSABot{currentUsername}, please enter '@' to end our conversation {Environment.NewLine} ");
             Chatbot_Color("CSABot: ", $"I am here to assit you with passwords, scams, privacy, phishing, {Environment.NewLine}");
             Chatbot_Color("CSABot: ", $"If you are a returing friend, please greet me with a 'hello' or 'hi' or press send to receive a surprise!!{Environment.NewLine}");//tooo make the chatbot more fun and engaing 
-            
-
-            
-
+           
         }
         private void start_bot(object sender, RoutedEventArgs e)
         {//start
@@ -102,16 +96,12 @@ namespace Cybersecurity_Awareness_ChatBot_2
                 soundPlayer.SoundLocation = System.IO.Path.Combine(runningFolder, "Recording.wav");
                 soundPlayer.Play();
 
-
             }
             catch(Exception ex) { 
                 // Handle the exception (e.g., log it, show a message to the user, etc.)
                MessageBox.Show($"Error playing sound: {ex.Message}");
             }
-            
-            
-
-
+           
         }
 
 
@@ -121,7 +111,6 @@ namespace Cybersecurity_Awareness_ChatBot_2
             input = InputArea.Text.Trim();
             userName = txtNameInput.Text.Trim();
 
-            
 
             // Check if the input is the "@" symbol, which is reserved for ending the conversation, and if so, shut down the application
             if (input == "@")
@@ -145,8 +134,7 @@ namespace Cybersecurity_Awareness_ChatBot_2
             InputArea.Focus();
         }
 
-        
-        
+       
         public string ChatAiResponse(string input)
         {
             input = input.Trim().ToLower();
