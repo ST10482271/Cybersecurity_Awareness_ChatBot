@@ -16,6 +16,8 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Xml.Linq;
+using static Microsoft.Data.SqlClient.Internal.SqlClientEventSource;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Cybersecurity_Awareness_ChatBot_2
 {
@@ -67,6 +69,9 @@ namespace Cybersecurity_Awareness_ChatBot_2
 
         List<string> sessionTopics = new List<string>();
         bool checkedGreeting = false;
+
+        TasksRepo repo = new TasksRepo();
+        LogActivity logRepo = new LogActivity();
 
         public MainWindow()
         {
@@ -134,14 +139,15 @@ namespace Cybersecurity_Awareness_ChatBot_2
             InputArea.Focus();
         }
 
-       
+
         public string ChatAiResponse(string input)
         {
             input = input.Trim().ToLower();
 
             string[] splitted = input.Split(' ');
 
-            while (true) {
+            while (true)
+            {
 
                 // Check for returning user greeting
                 if (!checkedGreeting && !string.IsNullOrWhiteSpace(currentUsername))
@@ -151,7 +157,7 @@ namespace Cybersecurity_Awareness_ChatBot_2
                     string greeting = ChatbotMemory.GetReturningUserGreeting(currentUsername);// Get a personalized greeting based on the user's name and past interactions
                     if (!string.IsNullOrWhiteSpace(greeting))
                     {
-                       return greeting;// If a personalized greeting is available, return it to the user
+                        return greeting;// If a personalized greeting is available, return it to the user
                     }
                 }
 
@@ -162,15 +168,18 @@ namespace Cybersecurity_Awareness_ChatBot_2
                 if (input.Contains("privacy")) detectedTopic = "privacy";
                 if (input.Contains("phishing")) detectedTopic = "phishing";
 
-                if (!string.IsNullOrWhiteSpace(detectedTopic)) { 
-                
+                if (!string.IsNullOrWhiteSpace(detectedTopic))
+                {
+
                     sessionTopics.Add(detectedTopic);// Add the detected topic to the session topics list for potential future reference or analysis
 
                     // Count how many times the detected topic has been mentioned in the current session
                     int topicCount = 0;
-                    foreach(string topic in sessionTopics) { 
-                    
-                        if (topic == detectedTopic) { 
+                    foreach (string topic in sessionTopics)
+                    {
+
+                        if (topic == detectedTopic)
+                        {
                             topicCount++;
                         }
 
@@ -178,8 +187,9 @@ namespace Cybersecurity_Awareness_ChatBot_2
 
                     //check if they said interested in learning about the topic or asked over 2 times
                     bool isInterested = input.Contains("interested");
-                    if (isInterested || topicCount > 2 ) { 
-                    
+                    if (isInterested || topicCount > 2)
+                    {
+
                         ChatbotMemory.SaveUserInterest(currentUsername, detectedTopic);// Save the user's interest in the detected topic for future reference or personalized interactions
                     }
                 }
@@ -197,8 +207,8 @@ namespace Cybersecurity_Awareness_ChatBot_2
                 if (input.Contains("phishing")) currentTopic = "phishing";
 
                 //Handle sentiemtnal responses
-               Sentiemantal_Responses sentimentalResponse = new Sentiemantal_Responses();
-               string response = sentimentalResponse.GetSentimentalResponse(input, currentUsername);
+                Sentiemantal_Responses sentimentalResponse = new Sentiemantal_Responses();
+                string response = sentimentalResponse.GetSentimentalResponse(input, currentUsername);
 
                 if (!string.IsNullOrWhiteSpace(response))
                 {
@@ -216,41 +226,157 @@ namespace Cybersecurity_Awareness_ChatBot_2
                 if (input.Contains("privacy"))
                     return GetRandomTips(privacy);
 
-                if (input.Contains("phishing")) 
+                if (input.Contains("phishing"))
                     return GetRandomTips(phishing);
 
 
                 // Handle requests for more information
-                if (HasAnyKeyword(input, "explain", "another", "more")) { 
-                    
-                  if (currentTopic == "passwords") return GetRandomTips(password);//return more info on the current topic
-                  if (currentTopic == "scams") return GetRandomTips(scams);
-                  if (currentTopic == "privacy") return GetRandomTips(privacy);
-                  if (currentTopic == "phishing") return GetRandomTips(phishing);
+                if (HasAnyKeyword(input, "explain", "another", "more"))
+                {
+
+                    if (currentTopic == "passwords") return GetRandomTips(password);//return more info on the current topic
+                    if (currentTopic == "scams") return GetRandomTips(scams);
+                    if (currentTopic == "privacy") return GetRandomTips(privacy);
+                    if (currentTopic == "phishing") return GetRandomTips(phishing);
 
                 }
 
                 // Handle expressions of worry or concern
-                if (HasAnyKeyword(input, "worried","concerned", "fearful,", "frustrated")) { 
-                
+                if (HasAnyKeyword(input, "worried", "concerned", "fearful,", "frustrated"))
+                {
+
                     return $"I know cybersecurity can be overwhelming, but being informed and cautious is the best way to protect yourself. Please specifiy which topic you are concerned about. e.g i am worried about passwords.";
                 }
 
-                // Han dle greetings for non-returning users
-                if (HasAnyKeyword(input, "hello", "hi")) 
-                    return "I told you it is only for returning users, but since you said hi, welcome the topics that I can assist with is above";
-                
+                if (input.StartsWith("add task"))
+                {
+                    try
+                    {
+                        string[] taskParts = input.Split(',');
 
-                //Handle gratitude and ending conversation
-                if(HasAnyKeyword(input, "thank you", "thanks"))
-                    return "You're welcome! If you have any more questions or need further assistance, feel free to ask 😁👍.";
+                        string title = taskParts[1].Trim();
+                        string description = taskParts[2].Trim();
 
-                //Catch-all response for unrecognized input error Handling
-                 return "I'm sorry, I don't understand. Please rephrase your question or specify a topic you'd like to learn about, such as 'passwords', 'scams', and 'privacy'.";
+
+                        DateTime? reminder = null;
+                        if (taskParts.Length > 3 && !string.IsNullOrWhiteSpace(taskParts[3]))
+                        {
+                            // Try to parse the reminder date, if provided, and handle potential format issues
+                            if (DateTime.TryParse(taskParts[3].Trim(), out DateTime parsedDate))
+                            {
+
+                                reminder = parsedDate;
+                            }
+                            else
+                            {
+                                return "Invaild date format. Skipping reminder.";
+                            }
+                        }
+
+                        int taskPK = repo.AddTask(title, description, reminder);
+                        repo.LogActivity("priya", "ADD TASK", $"Successfully created Task #{newId}: {title}");
+
+                        return $"Successfully added!! Your task number is {taskPK} \nYou can use it to:\nView the task\nUpdate the task\nDelete the task";
+                        //use taskID so other user's task can't be accessed by other users
+                    }
+                    catch (FormatException)
+                    {
+                        return "Invaild format. Use: \n add task, title, description, YYYY/MM/DD 00:00:00 e.g 23:30:08 \n\n ";//provide user with correct format, incase of error
+                    }
+                    catch (Exception ex)
+                    {
+                        return ex.Message;
+                        // helps developers debug 
+                    }
+
+                }
+
+                if (input.StartsWith("view task"))
+                {
+                    // Accept either "view task, <id>" or "view task <id>"
+                    string cleanUP = input.Substring("view task".Length).Trim();
+                    // Remove any leading commas or spaces
+                    cleanUP = cleanUP.TrimStart(',', ' ').Trim();
+
+                    if (string.IsNullOrWhiteSpace(cleanUP))// If no task ID is provided after "view task", prompt the user to provide one
+                    {
+                        return "Please provide a task ID. Use: view task, <taskID> or view task <taskID>";
+                    }
+
+                    // Try to parse the task ID and handle potential format issues
+                    if (!int.TryParse(cleanUP, out int parsedID))
+                    {
+                        return "Invalid task ID format. Use: view task, taskID or view task taskID";
+                    }
+
+                    var tasks = repo.GetTasks(parsedID);
+                    foreach (var task in tasks)
+                    {
+                        return $"\nTitle: {task.TaskTitle} \nDescription: {task.TaskDescription} \nReminder: {task.TaskReminderDate}\n";
+                    }
+
+                    return $"Task {parsedID} not found.";// If no task is found with the provided ID, inform the user
+                }
+
+                // Handle task completion requests
+                if (input.StartsWith("completed task"))
+                {
+
+                    try
+                    {
+                        // Accept either "completed task, <id>" or "completed task <id>"
+                        string cleanUP = input.Substring("completed task".Length).Trim();
+                        cleanUP = input.Replace("completed task", "").TrimStart(',',' '); // Remove the command part and any leading commas or spaces
+
+                        int taskID = Convert.ToInt32(cleanUP);
+                        repo.CompletedTask(taskID);
+
+                        return $"Task {taskID} marked as completed.";// Inform the user that the task has been marked as completed
+                    }
+                    catch (FormatException)
+                    {
+                        return "Invalid taskID or taskID does not exist";
+                    }
+
+                    catch (Exception ex)
+                    {
+                        return ex.Message; // general fallback, helps developers debug
+                    }
+                }
+
+                    // Handle task deletion requests
+                if (input.StartsWith("delete task"))
+                {
+                        try
+                        {
+                        //Accept either "delete task, <id>" or "delete task <id>"
+                        string cleanUP = input.Substring("delete task".Length).Trim();
+                            cleanUP = input.Replace("delete task", "").TrimStart(',',' ');
+
+                            int taskID = Convert.ToInt32(cleanUP);
+                            repo.DeleteTask(taskID);
+                            return $"Task {taskID} has been deleted.";// Inform the user that the task has been deleted
+                        }
+                        catch
+                        {
+                            return $"Invaid taskID or taskID does not exist";
+                        }
+
+                }
+
+                    // Handle greetings for non-returning users
+                    if (HasAnyKeyword(input, "hello", "hi"))
+                        return "I told you it is only for returning users, but since you said hi, welcome the topics that I can assist with is above";
+
+
+                    //Handle gratitude and ending conversation
+                    if (HasAnyKeyword(input, "thank you", "thanks"))
+                        return "You're welcome! If you have any more questions or need further assistance, feel free to ask 😁👍.";
+
+                    //Catch-all response for unrecognized input error Handling
+                    return "I'm sorry, I don't understand. Please rephrase your question or specify a topic you'd like to learn about, such as 'passwords', 'scams', and 'privacy'.";
 
             }
-
-            
         }
 
         private void btnSubmit_Click(object sender, RoutedEventArgs e)
