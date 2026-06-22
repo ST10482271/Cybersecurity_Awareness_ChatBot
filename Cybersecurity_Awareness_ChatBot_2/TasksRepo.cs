@@ -52,12 +52,13 @@ namespace Cybersecurity_Awareness_ChatBot_2
 
                 using (SqlDataReader reader = cmd.ExecuteReader())
                 {
+                    // Read the results from the database and populate the list of CyberTasks
                     while (reader.Read())
                     {
                        tasks.Add(new CyberTasks
                         {
-                            TaskTitle = reader["TaskTitle"].ToString(),
-                            TaskDescription = reader["TaskDescription"].ToString(),
+                            TaskTitle = reader["TaskTitle"].ToString(),// Retrieve the TaskTitle from the database and convert it to a string
+                           TaskDescription = reader["TaskDescription"].ToString(),
                             TaskReminderDate = reader["TaskReminderDate"] == DBNull.Value ? null :Convert.ToDateTime(reader["TaskReminderDate"])
                        });
                         

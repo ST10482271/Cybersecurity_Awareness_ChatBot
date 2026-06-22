@@ -248,6 +248,29 @@ namespace Cybersecurity_Awareness_ChatBot_2
                     return $"I know cybersecurity can be overwhelming, but being informed and cautious is the best way to protect yourself. Please specifiy which topic you are concerned about. e.g i am worried about passwords.";
                 }
 
+                // Handle requests to view activity logs, I used a database as i think i will work better than a list or dictionary,rgarding how the projec and data is structured, it is easier to store and retrieve, makes the project more dynamic
+                if (input.Contains("show activity logs") || input.Contains("view logs") || input.Contains("activity logs"))
+                {
+
+                    List<string> logs = logRepo.GetActivityLog(currentUsername);
+                    string totalLogs = "";
+
+                    // Check if they actually have any logs yet
+                    if (logs.Count == 0)
+                    {
+                        return "\nNo activity history found for your account.\n";
+
+                    }
+
+                    // Return the most recent log entry for the user
+                    foreach (string logLine in logs)
+                    {
+                        totalLogs += logLine + "\n";
+                    }
+                    return $"\n{totalLogs}";
+
+                }
+
                 if (input.StartsWith("add task"))
                 {
                     try
@@ -273,8 +296,11 @@ namespace Cybersecurity_Awareness_ChatBot_2
                             }
                         }
 
+                        // Add the task to the repository and get the primary key (ID) of the newly created task
                         int taskPK = repo.AddTask(title, description, reminder);
-                        repo.LogActivity("priya", "ADD TASK", $"Successfully created Task #{newId}: {title}");
+
+                        // Log the activity of adding a task with the current user's name, the action performed, and details about the task that was created
+                        logRepo.AddLogActivity(currentUsername, "ADD TASK", $"Successfully created Task #{taskPK}: {title}");
 
                         return $"Successfully added!! Your task number is {taskPK} \nYou can use it to:\nView the task\nUpdate the task\nDelete the task";
                         //use taskID so other user's task can't be accessed by other users
@@ -315,7 +341,10 @@ namespace Cybersecurity_Awareness_ChatBot_2
                         return $"\nTitle: {task.TaskTitle} \nDescription: {task.TaskDescription} \nReminder: {task.TaskReminderDate}\n";
                     }
 
+                    logRepo.AddLogActivity(currentUsername, "VIEW TASK", $"Viwed task {parsedID}");// Log the activity of viewing a task 
+
                     return $"Task {parsedID} not found.";// If no task is found with the provided ID, inform the user
+                    
                 }
 
                 // Handle task completion requests
@@ -329,11 +358,15 @@ namespace Cybersecurity_Awareness_ChatBot_2
                         cleanUP = input.Replace("completed task", "").TrimStart(',',' '); // Remove the command part and any leading commas or spaces
 
                         int taskID = Convert.ToInt32(cleanUP);
+
+                        // Mark the task as completed in the repository method
                         repo.CompletedTask(taskID);
+                        // Log the activity of marking a task as completed 
+                        logRepo.AddLogActivity(currentUsername, "COMPLETED TASK", $"mark task {taskID} as completed");
 
                         return $"Task {taskID} marked as completed.";// Inform the user that the task has been marked as completed
                     }
-                    catch (FormatException)
+                    catch (FormatException)// Handle the case where the task ID is not a valid integer
                     {
                         return "Invalid taskID or taskID does not exist";
                     }
@@ -351,11 +384,16 @@ namespace Cybersecurity_Awareness_ChatBot_2
                         {
                         //Accept either "delete task, <id>" or "delete task <id>"
                         string cleanUP = input.Substring("delete task".Length).Trim();
-                            cleanUP = input.Replace("delete task", "").TrimStart(',',' ');
+                        cleanUP = input.Replace("delete task", "").TrimStart(',',' ');
 
-                            int taskID = Convert.ToInt32(cleanUP);
-                            repo.DeleteTask(taskID);
-                            return $"Task {taskID} has been deleted.";// Inform the user that the task has been deleted
+                         int taskID = Convert.ToInt32(cleanUP);
+
+                        // Delete the task from the repository method
+                        repo.DeleteTask(taskID);
+                        // Log the activity of deleting a task 
+                        logRepo.AddLogActivity(currentUsername, "DELETE TASK", $"Deleted task number {taskID}");
+
+                        return $"Task {taskID} has been deleted.";// Inform the user that the task has been deleted
                         }
                         catch
                         {
@@ -364,6 +402,9 @@ namespace Cybersecurity_Awareness_ChatBot_2
 
                 }
 
+
+
+             
                     // Handle greetings for non-returning users
                     if (HasAnyKeyword(input, "hello", "hi"))
                         return "I told you it is only for returning users, but since you said hi, welcome the topics that I can assist with is above";
