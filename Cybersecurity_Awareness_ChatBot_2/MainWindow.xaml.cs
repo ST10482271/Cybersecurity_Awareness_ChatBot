@@ -18,6 +18,7 @@ using System.Windows.Shapes;
 using System.Xml.Linq;
 using static Microsoft.Data.SqlClient.Internal.SqlClientEventSource;
 using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.IO;
 
 namespace Cybersecurity_Awareness_ChatBot_2
 {
@@ -72,6 +73,13 @@ namespace Cybersecurity_Awareness_ChatBot_2
 
         TasksRepo repo = new TasksRepo();
         LogActivity logRepo = new LogActivity();
+
+        private enum ChatState { Default, AddingTask, TakingQuiz }// Enum to represent the current state of the chatbot, which can be in a default state, adding a task, or taking a quiz
+        private ChatState currentState = ChatState.Default;// Variable to keep track of the current state of the chatbot, initialized to the default state
+
+        private List<QuizQuestion> quizQuestions = new List<QuizQuestion>();//this is the object that will hold the quiz questions, it is a list of QuizQuestion objects, which is a class that holds the question, choices, correct answer, and explanation for each question (getters and setters are used to access the properties of the class)
+        private int currentQuestionIndex = 0;//acts a pointer to keep track of which question user is currrently on
+        private int quizScore = 0;//acts a counter to keep track of how many questions the user has answered correctly, it is incremented each time the user answers a question correctly
 
         public MainWindow()
         {
@@ -404,9 +412,111 @@ namespace Cybersecurity_Awareness_ChatBot_2
 
 
 
-             
-                    // Handle greetings for non-returning users
-                    if (HasAnyKeyword(input, "hello", "hi"))
+                //this acts a blueprint for the quiz game, it checks if the user is currently taking the quiz and processes their answer accordingly. It also handles the transition between questions and provides feedback on the user's performance.
+
+                if (currentState == ChatState.TakingQuiz)// Check if the chatbot is currently in the quiz-taking state
+                {
+                    string answer = input.Trim().ToUpper(); // Standardize to A, B, or C
+
+                    if (answer != "A" && answer != "B" && answer != "C")
+                    {
+                        return "Please answer with either A, B, or C.";
+                    }
+
+                    QuizQuestion currentQuestion = quizQuestions[currentQuestionIndex];// Get the current question based on the index, curentQuestion acts as an instance of the QuizQuestion object
+
+                    // if we use return keyword it will exit the method and not allow the next question to be served, so we use a feedback string to store the feedback and return it at the end of the method
+                    string feedback = "";
+
+                    // Grade the current question
+                    // Check if the user's answer matches the correct answer (case-insensitive)
+                    if (answer == currentQuestion.CorrectAnswer.Trim().ToUpper())//.CorrectAnswer this is taken from the QuizQuestion class, which is a blueprint for the quiz questions, and it is used to store the correct answer for each question with getters and setters
+                    {
+                        quizScore++;
+                        feedback = $"✨ Correct!\n💡 Explanation: {currentQuestion.Explanation}\n\n";//.Explanation this is also taken from the QuizQuestion class
+                    }
+                    else
+                    {
+                        feedback = $"❌ Incorrect. The correct answer was {currentQuestion.CorrectAnswer}.\n💡 Explanation: {currentQuestion.Explanation}\n\n";
+                    }
+
+                    // Move pointer to the next question
+                    currentQuestionIndex++;
+
+                    // If there are more questions left, serve the next one
+                    if (currentQuestionIndex < quizQuestions.Count)// Check if there are more questions to ask
+                    {
+                        // Get the next question based on the updated index
+                        QuizQuestion nextQuestion = quizQuestions[currentQuestionIndex];//QuizQuestion acts as a object, and nextQuestion as an instance of the object
+                        // Prepare the feedback message with the next question and its choices
+                        feedback += $"Question {currentQuestionIndex + 1}:\n{nextQuestion.QuestionText}\n" +//.QuestionText this is also taken from the QuizQuestion class
+                                    $"A) {nextQuestion.ChoiceA}\n" +//the choices are also taken from the QuizQuestion class 
+                                    $"B) {nextQuestion.ChoiceB}\n" +
+                                    $"C) {nextQuestion.ChoiceC}";
+                        return feedback;
+                    }
+                    // No questions left so end Game
+                    else
+                    {
+                        currentState = ChatState.Default; // Drop back to regular chat
+                        feedback += $"🏆 Quiz Completed!\nYour final score is: {quizScore} / {quizQuestions.Count}\n";// Provide the user with their final score after completing the quiz
+
+                        // Provide feedback based on the user's score                                                                      
+                        if (quizScore < 6)
+                        {
+
+                            feedback += "Please review the topics above and try the quiz again to improve your score!";
+                        }
+                        else { 
+                        
+                            feedback += "Great job! You have a good understanding of cybersecurity awareness. Keep up the good work!";
+                        }
+
+                        // Log the activity of taking the quiz with the user's score
+                        logRepo.AddLogActivity(currentUsername, "QUIZ ATTEMPT", $"played quiz game score: {quizScore} / {quizQuestions.Count}");
+
+                        return feedback;
+                    }
+                   
+
+                    
+                }
+
+
+                //this section handles the initiation of the quiz game when the user expresses interest in starting it. It checks for specific keywords in the user's input and sets up the quiz environment accordingly.
+                //this part runs first then the above section runs after the user has started the quiz and is answering questions
+
+                if (input.Contains("start quiz") || input.Contains("take quiz") || input.Contains("start game"))
+                {
+                    // 1. Reads the 'questions.txt' file and loads all 10 questions into memory at once
+                    if (quizQuestions.Count == 0)
+                    {
+                        InitializeQuiz();
+                    }
+
+                    // 2. Switches the chatbot state and resets the game tracking numbers
+                    currentState = ChatState.TakingQuiz;
+                    currentQuestionIndex = 0; // Starts at the beginning (Question 1)
+                    quizScore = 0;            // Resets score to zero
+
+                    // 3. Dynamically grabs whatever question is sitting at position 0 (the first line of  file)
+                    QuizQuestion firstQuestion = quizQuestions[0];//firstQuestion acts as an instance to load the first question
+
+                    // 4. Returns that first question to the user
+                    return $"🎮 Welcome to the Cybersecurity Awareness Quiz! Let's test your skills.\n\n" +
+                           $"Question 1:\n{firstQuestion.QuestionText}\n" +
+                           $"A) {firstQuestion.ChoiceA}\n" +
+                           $"B) {firstQuestion.ChoiceB}\n" +
+                           $"C) {firstQuestion.ChoiceC}";
+
+                    //only the first question is returned, the rest of the questions are handled in the above section where the user is answering questions and the chatbot is grading them and providing feedback
+                }
+
+
+
+
+                // Handle greetings for non-returning users
+                if (HasAnyKeyword(input, "hello", "hi"))
                         return "I told you it is only for returning users, but since you said hi, welcome the topics that I can assist with is above";
 
 
@@ -499,7 +609,7 @@ namespace Cybersecurity_Awareness_ChatBot_2
         }
 
         private void Chatbot_Color(string name, string message)
-        {//start of error mehtod
+        {
 
             //call the chats which is a listview
             ChatArea.Items.Add(
@@ -525,7 +635,7 @@ namespace Cybersecurity_Awareness_ChatBot_2
 
                 );
 
-        }//end of error method
+        }
 
         private void User_Color(string name, string message)
         {
@@ -555,5 +665,43 @@ namespace Cybersecurity_Awareness_ChatBot_2
 
 
         }
+
+        private void InitializeQuiz()
+        {
+            quizQuestions = new List<QuizQuestion>();
+
+            // Read every line from file
+            string[] lines = File.ReadAllLines("questions.txt");
+
+            foreach (string line in lines)
+            {
+                // Skip empty lines 
+                if (string.IsNullOrWhiteSpace(line)) continue;
+
+                // Split the line by the pipe character '|'
+                string[] parts = line.Split('|');
+
+                //helps developers debug to know if the file is broken or missing a pipe symbol
+                if (parts.Length < 6)
+                {
+                    System.Windows.MessageBox.Show($"Error! This line is broken or missing a pipe symbol:\n\n{line}");
+                    continue; // Skip this broken line so the app doesn't crash
+                }
+
+                // Map the parts directly into QuizQuestion object, like when loaded the tasks
+                quizQuestions.Add(new QuizQuestion
+                {
+                    QuestionText = parts[0],
+                    ChoiceA = parts[1],
+                    ChoiceB = parts[2],
+                    ChoiceC = parts[3],
+                    CorrectAnswer = parts[4],
+                    Explanation = parts[5]
+                });
+            }
+        }
+
+       
+    
     }
 }
