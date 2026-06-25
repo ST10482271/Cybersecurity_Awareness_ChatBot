@@ -256,8 +256,13 @@ namespace Cybersecurity_Awareness_ChatBot_2
                     return $"I know cybersecurity can be overwhelming, but being informed and cautious is the best way to protect yourself. Please specifiy which topic you are concerned about. e.g i am worried about passwords.";
                 }
 
+                string[] viewLogSynonyms = { "show", "view", "display", "list", "see", "read", "get", "fetch" };
+                string[] logTargetSynonyms = { "logs", "log", "activity", "activities", "history", "actions", "audit" };
+
+                bool matchesSynonyms = viewLogSynonyms.Any(v => input.Contains(v)) && logTargetSynonyms.Any(l => input.Contains(l));
+
                 // Handle requests to view activity logs, I used a database as i think i will work better than a list or dictionary,rgarding how the projec and data is structured, it is easier to store and retrieve, makes the project more dynamic
-                if (input.Contains("show activity logs") || input.Contains("view logs") || input.Contains("activity logs"))
+                if (matchesSynonyms)
                 {
 
                     List<string> logs = logRepo.GetActivityLog(currentUsername);
@@ -279,11 +284,37 @@ namespace Cybersecurity_Awareness_ChatBot_2
 
                 }
 
-                if (input.StartsWith("add task"))
+                //NLP for task 3 
+                // Action Vocabularies
+                // These are the synonyms for the actions that the user might want to perform, such as adding, viewing, updating, or deleting tasks. The chatbot will check if the user's input contains any of these synonyms to determine what action they want to take.
+                string[] addSynonyms = { "add", "create", "new", "make", "save", "insert" };
+                string[] viewSynonyms = { "view", "show", "display", "list", "see", "read" };
+                string[] updateSynonyms = { "update", "change", "edit", "modify", "fix", "completed" };
+                string[] deleteSynonyms = { "delete", "remove", "clear", "erase", "drop" };
+
+                // Target Vocabularies (What are they acting on?)
+                string[] taskSynonyms = { "task", "tasks", "todo", "todos", "reminder", "reminders", "job" };
+
+                // These evaluate to either True or False
+                //Any() method checks if any element in the collection satisfies the condition specified in the lambda expression, which in this case is whether the input contains any of the synonyms for adding a task and any of the synonyms for tasks. If both conditions are met, wantsToAddTask will be true; otherwise, it will be false.
+                bool wantsToAddTask = addSynonyms.Any(s => input.Contains(s)) && taskSynonyms.Any(t => input.Contains(t));
+                bool wantsToViewTasks = viewSynonyms.Any(s => input.Contains(s)) && taskSynonyms.Any(t => input.Contains(t));
+                bool wantsToUpdateTask = updateSynonyms.Any(s => input.Contains(s)) && taskSynonyms.Any(t => input.Contains(t));
+                bool wantsToDeleteTask = deleteSynonyms.Any(s => input.Contains(s)) && taskSynonyms.Any(t => input.Contains(t));
+
+                if (wantsToAddTask || (input.Contains(",") && input.ToLower().Contains("add")))
                 {
                     try
                     {
                         string[] taskParts = input.Split(',');
+
+                        //  Check if they just typed "I want to add a task" without data
+                        if (taskParts.Length < 3)
+                        {
+                            return "Sure! To add a task quickly, please use this comma format:\n" +
+                                   "👉 *add task, Title, Description, [Optional Date]*\n" +
+                                   "Example:`add task, Study Security, Read chapter 4, 2026/06/24 14:00:00`";
+                        }
 
                         string title = taskParts[1].Trim();
                         string description = taskParts[2].Trim();
@@ -325,16 +356,27 @@ namespace Cybersecurity_Awareness_ChatBot_2
 
                 }
 
-                if (input.StartsWith("view task"))
+                if (wantsToViewTasks)
                 {
-                    // Accept either "view task, <id>" or "view task <id>"
-                    string cleanUP = input.Substring("view task".Length).Trim();
-                    // Remove any leading commas or spaces
-                    cleanUP = cleanUP.TrimStart(',', ' ').Trim();
+                    string cleanUP = input;
 
                     if (string.IsNullOrWhiteSpace(cleanUP))// If no task ID is provided after "view task", prompt the user to provide one
                     {
                         return "Please provide a task ID. Use: view task, <taskID> or view task <taskID>";
+                    }
+
+                    //Find and remove whichever action synonym they used
+                    foreach (string action in viewSynonyms)
+                    {
+                        // Use Regex or a case-insensitive replace to whatever action word they used like "remove" to ""
+                        cleanUP = System.Text.RegularExpressions.Regex.Replace(cleanUP, action, "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                    }
+
+
+                    // Find and remove whichever target synonym they used using regex
+                    foreach (string target in taskSynonyms)
+                    {
+                        cleanUP = System.Text.RegularExpressions.Regex.Replace(cleanUP, target, "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
                     }
 
                     // Try to parse the task ID and handle potential format issues
@@ -343,40 +385,67 @@ namespace Cybersecurity_Awareness_ChatBot_2
                         return "Invalid task ID format. Use: view task, taskID or view task taskID";
                     }
 
+                    cleanUP = cleanUP.Trim(',', ' ', ':', '#');
+
+                    //get the task from the repository using the parsed task ID and return its details if found
                     var tasks = repo.GetTasks(parsedID);
                     foreach (var task in tasks)
                     {
                         return $"\nTitle: {task.TaskTitle} \nDescription: {task.TaskDescription} \nReminder: {task.TaskReminderDate}\n";
                     }
 
-                    logRepo.AddLogActivity(currentUsername, "VIEW TASK", $"Viwed task {parsedID}");// Log the activity of viewing a task 
+                   logRepo.AddLogActivity(currentUsername, "VIEW TASK", $"Viwed task {parsedID}");// Log the activity of viewing a task 
 
                     return $"Task {parsedID} not found.";// If no task is found with the provided ID, inform the user
                     
                 }
 
                 // Handle task completion requests
-                if (input.StartsWith("completed task"))
+                if (wantsToUpdateTask)
                 {
 
                     try
                     {
-                        // Accept either "completed task, <id>" or "completed task <id>"
-                        string cleanUP = input.Substring("completed task".Length).Trim();
-                        cleanUP = input.Replace("completed task", "").TrimStart(',',' '); // Remove the command part and any leading commas or spaces
+                        string cleanUP = input;
 
-                        int taskID = Convert.ToInt32(cleanUP);
+                        //Find and remove whichever action synonym they used
+                        foreach (string action in updateSynonyms)
+                        {
+                            // Use Regex or a case-insensitive replace to whatever action word they used like "remove" to ""
+                            cleanUP = System.Text.RegularExpressions.Regex.Replace(cleanUP, action, "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                        }
+
+                        // Find and remove whichever target synonym they used using regex
+                        foreach (string target in taskSynonyms)
+                        {
+                            cleanUP = System.Text.RegularExpressions.Regex.Replace(cleanUP, target, "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                        }
+
+                        cleanUP = cleanUP.Trim(',', ' ', ':', '#');
+
+                        //Also falls apart of NLP
+                        // Extract ONLY the numeric digits from what's left of the string
+                        // This takes away words like "to complete" or "finished", so we can write "edit task 5 to complete"
+                        string onlyDigits = new string(cleanUP.Where(char.IsDigit).ToArray());
+                        //use Where to filter out only the digits from the cleaned-up string, and then convert it to an array of characters, which is then used to create a new string containing only those digits
+
+                        // Check if there is actually a valid number left to parse
+                        if (string.IsNullOrWhiteSpace(onlyDigits) || !int.TryParse(onlyDigits, out int taskID))
+                        {
+                            return "Please specify a valid numeric Task ID. For example: 'update task 5 to complete'";
+                        }
 
                         // Mark the task as completed in the repository method
                         repo.CompletedTask(taskID);
+
                         // Log the activity of marking a task as completed 
                         logRepo.AddLogActivity(currentUsername, "COMPLETED TASK", $"mark task {taskID} as completed");
 
                         return $"Task {taskID} marked as completed.";// Inform the user that the task has been marked as completed
                     }
-                    catch (FormatException)// Handle the case where the task ID is not a valid integer
+                    catch (FormatException)// Handle the case where the task ID is not existing
                     {
-                        return "Invalid taskID or taskID does not exist";
+                        return "taskID does not exist";
                     }
 
                     catch (Exception ex)
@@ -386,22 +455,45 @@ namespace Cybersecurity_Awareness_ChatBot_2
                 }
 
                     // Handle task deletion requests
-                if (input.StartsWith("delete task"))
+                if (wantsToDeleteTask)
                 {
                         try
                         {
-                        //Accept either "delete task, <id>" or "delete task <id>"
-                        string cleanUP = input.Substring("delete task".Length).Trim();
-                        cleanUP = input.Replace("delete task", "").TrimStart(',',' ');
 
-                         int taskID = Convert.ToInt32(cleanUP);
+                        string cleanUP = input;
 
-                        // Delete the task from the repository method
-                        repo.DeleteTask(taskID);
-                        // Log the activity of deleting a task 
-                        logRepo.AddLogActivity(currentUsername, "DELETE TASK", $"Deleted task number {taskID}");
+                        //Find and remove whichever action synonym they used
+                        foreach (string action in deleteSynonyms)
+                        {
+                            // Use Regex or a case-insensitive replace to whatever action word they used like "remove" to ""
+                            cleanUP = System.Text.RegularExpressions.Regex.Replace(cleanUP, action, "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                        }
 
-                        return $"Task {taskID} has been deleted.";// Inform the user that the task has been deleted
+                        // Find and remove whichever target synonym they used using regex
+                        foreach (string target in taskSynonyms)
+                        {
+                            cleanUP = System.Text.RegularExpressions.Regex.Replace(cleanUP, target, "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                        }
+
+                        // remove any remaining junk like spaces, commas, or colons left behind
+                        cleanUP = cleanUP.Trim(',', ' ', ':', '#');
+
+                        // Safety Guard: Check if there is actually a number left to parse
+                        if (string.IsNullOrWhiteSpace(cleanUP))
+                        {
+                            return "Please specify a valid numeric Task ID. For example: `delete task 5` or `remove reminder 12`";
+                        }
+
+                        //convert to int
+                        int taskID = Convert.ToInt32(cleanUP);
+
+                          // Delete the task from the repository method
+                          repo.DeleteTask(taskID);
+
+                          //Log the activity of deleting a task 
+                          logRepo.AddLogActivity(currentUsername, "DELETE TASK", $"Deleted task number {taskID}");
+
+                          return $"Task {taskID} has been deleted.";// Inform the user that the task has been deleted
                         }
                         catch
                         {
@@ -409,6 +501,13 @@ namespace Cybersecurity_Awareness_ChatBot_2
                         }
 
                 }
+
+                // Define synonym maps
+                string[] startTriggers = { "start", "take", "begin", "play", "do", "run" };
+                string[] quizTriggers = { "quiz", "game", "test", "questions", "assessment" };
+
+                // Check for combination inside ProcessUserInput
+                bool wantsToPlay = startTriggers.Any(s => input.Contains(s)) && quizTriggers.Any(q => input.Contains(q));
 
 
 
@@ -486,7 +585,7 @@ namespace Cybersecurity_Awareness_ChatBot_2
                 //this section handles the initiation of the quiz game when the user expresses interest in starting it. It checks for specific keywords in the user's input and sets up the quiz environment accordingly.
                 //this part runs first then the above section runs after the user has started the quiz and is answering questions
 
-                if (input.Contains("start quiz") || input.Contains("take quiz") || input.Contains("start game"))
+                if (wantsToPlay)
                 {
                     // 1. Reads the 'questions.txt' file and loads all 10 questions into memory at once
                     if (quizQuestions.Count == 0)
